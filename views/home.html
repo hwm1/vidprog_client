@@ -1,0 +1,113 @@
+<div id="viewid" class="container">
+
+  <p style="padding:40px;"></p>
+
+
+  <div class="row">
+    <div class="col-xs-12 col-sm-10 col-sm-offset-1">
+
+      <h3 id="listTitle">
+        <!-- <span style='font-style: italic;'>{{username}}'s&nbsp;lists </span> -->
+        <span ng-show="loggedIn">{{username}}'s&nbsp;lists </span>
+      </h3>
+
+      <ul style="padding:0">
+        <li id="nameList" ng-repeat="name in listNames  | orderBy:sortType:sortReverse track by $index">
+          <!-- | orderBy:sortType:sortReverse -->
+          <button class="btn btn-primary btn-sharp nameButton" ng-click="selectListAndStartVid(listNames.indexOf(name))">
+            <span>{{name}}</span>
+          </button>
+
+        </li>
+      </ul>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="col-sm-10 col-centered ">
+      <div style="color: #fff;">
+        <h4 ng-hide="!displayListName">
+          Selected List:&nbsp&nbsp
+          <span style='font-style: italic;'>{{displayListName}}</span>
+        </h4>
+      </div>
+      <div class="embed-responsive embed-responsive-16by9">
+        <youtube-video video-id=vidToPlay class="embed-responsive-item" player-vars="playerVars" id="player" frameborder="0" style="border: solid 4px #37474F"></youtube-video>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="col-xs-6 col-sm-2  col-sm-offset-7">
+      <button ng-show="loggedIn" type="button" ng-click="editListFun()" class="btn-sp btn btn-warning btn-lg">&nbsp Edit selected list &nbsp</button>
+    </div>
+    <div class="col-xs-6 col-sm-2">
+
+      <button ng-show="loggedIn" type="submit" ng-click="showNameBoxFun()" class="btn-sp btn btn-primary btn-lg">&nbsp Create lists &nbsp</button>
+    </div>
+  </div>
+
+
+  <p style="padding:3px;"></p>
+
+  <div class="row">
+    <div class="col-sm-3 col-sm-offset-8">
+
+      <div class="input-group" ng-show="showInput">
+
+        <input ng-maxlength="20" type="text" ng-focus="hideDupErrBox()" placeholder="Name for new list" ng-model="newListName" class="form-control"
+        />
+        <span class="input-group-btn">
+          <button class="btn btn-primary" ng-click="newListNameFun()" type="button">Go!</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <p style="padding:5px; "></p>
+    <div class="col-sm-10 col-centered ">
+
+      <!-- ----------------------------ERROR MESSAGES----------------------------  -->
+      <!-- duplicate list name message -->
+      <div class="alert alert-danger" ng-show="showDuplicateNameErrorBox" ng-blur="hideDupErrBox()" ng-click="hideDupErrBox()">
+        <!-- <a class="close" >&times;</a> -->
+        <strong>Error!</strong> You already have a list with that name.
+      </div>
+
+      <!-- must be logged in message -->
+      <div class="alert alert-danger" ng-show="showNotLoggedInErrorBox" ng-blur="hideNotLoggedInErrorBox()" ng-click="hideNotLoggedInErrorBox()">
+        <!-- <a class="close" >&times;</a> -->
+        <strong>Error!</strong> You must be logged in for that.
+      </div>
+
+      <!-- greeting message -->
+      <div class="alert alert-success" ng-hide="loggedIn" ng-blur="hideGreetingMessageBox()" ng-click="hideGreetingMessageBox()">
+        <!-- <a class="close" >&times;</a> -->
+        <strong>Sign up or sign in to create your own lists.</strong>
+      </div>
+
+
+    </div>
+  </div>
+
+  <div class="col-xs-12  col-sm-10 col-centered">
+    <p style="padding:5px; "></p>
+
+
+    <ul ui-sortable="sortableOptions" ng-model="list" class="list-group nav">
+      <!--  <li ng-repeat="video in userAndVideos.userVideos track by $index" class="list-group-item " ng-dblclick="select(video,$index)" -->
+      <li ng-repeat="video in list track by $index" class="list-group-item " ng-dblclick="select(video,$index)" ng-class="{active: isActive(video)}">
+
+        <h4 class="list-group-item-heading">{{video.videoName}}
+
+          <img height="42" style="float:right" class="ythumb" ng-src={{video.thumb}}> </img>
+        </h4>
+        <p class="list-group-item-text"> {{video.videoURL}}</p>
+      </li>
+    </ul>
+
+  </div>

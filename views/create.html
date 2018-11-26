@@ -1,0 +1,31 @@
+<div class="just-padding container" id="vidGroup">
+  <p style="padding:40px;"></p>
+
+
+  <h1 id="listTitle">
+    <span style='font-style: italic;'> Creating List:&nbsp&nbsp</span>{{newListName}}</h1>
+
+  <!-- <ul class="list-group well"> -->
+
+  <fieldset data-ng-repeat="new in newVid track by $index">
+    <input ng-maxlength="80" ng-model="new.videoName" placeholder="Title For Video" style="width: 100%;" class="input-group-lg"
+      type="text"></input>
+    <input ng-maxlength="80" ng-model="new.videoURL" placeholder="Path For Video" style="width: 100%;" class="input-group-lg"
+      type="text"></input>
+
+    <p></p>
+    <p></p>
+
+  </fieldset>
+
+  <div>
+
+    <button ng-click="addNewChoice()" class="btn btn-primary btn-lg btn-sp1">&nbsp Add Video to List &nbsp</button>
+    <button ng-click="goBack()" type="submit" class="btn btn-primary btn-lg btn-sp1">&nbsp Cancel &nbsp</button>
+    <button ng-click="saveNewList()" type="submit" class="btn btn-primary btn-lg btn-sp1">&nbsp New List Finished &nbsp</button>
+
+
+  </div>
+  <p style="padding:40px;"></p>
+
+</div>
