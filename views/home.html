@@ -33,7 +33,8 @@
         </h4>
       </div>
       <div class="embed-responsive embed-responsive-16by9">
-        <youtube-video video-id=vidToPlay class="embed-responsive-item" player-vars="playerVars" id="player" frameborder="0" style="border: solid 4px #37474F"></youtube-video>
+        <youtube-video player="specifiedTime.player" video-url=vidToPlay class="embed-responsive-item" player-vars="playerVars" id="player"
+          frameborder="0" style="border: solid 4px #37474F"></youtube-video>
       </div>
     </div>
   </div>
@@ -97,10 +98,11 @@
   <div class="col-xs-12  col-sm-10 col-centered">
     <p style="padding:5px; "></p>
 
-
     <ul ui-sortable="sortableOptions" ng-model="list" class="list-group nav">
+
       <!--  <li ng-repeat="video in userAndVideos.userVideos track by $index" class="list-group-item " ng-dblclick="select(video,$index)" -->
-      <li ng-repeat="video in list track by $index" class="list-group-item " ng-dblclick="select(video,$index)" ng-class="{active: isActive(video)}">
+      <li ng-repeat="video in list track by $index" class="list-group-item " ng-dblclick="select(video,$index)" ng-class="{active: isActive(video)}"
+        data-toggle="tooltip" title="Double click to play, or drag and drop">
 
         <h4 class="list-group-item-heading">{{video.videoName}}
 

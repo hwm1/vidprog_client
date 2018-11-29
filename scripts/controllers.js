@@ -9,10 +9,9 @@
 angular.module('vidprog')
 
   .controller('HeaderController', ['$scope', '$state', '$stateParams', '$rootScope',
-    'ngDialog', 'AuthFactory', function ($scope, $state, $stateParams, $rootScope, ngDialog,
-      AuthFactory) {
+    'ngDialog', 'AuthFactory', 'sharedProperties', function ($scope, $state, $stateParams, $rootScope, ngDialog,
+      AuthFactory, sharedProperties) {
 
-      $rootScope.loggedIn = false;
       $scope.username = '';
 
       if (AuthFactory.isAuthenticated()) {
@@ -20,25 +19,24 @@ angular.module('vidprog')
         $scope.username = AuthFactory.getUsername();
       }
 
-      $scope.openLogin = function () {
-        ngDialog.open({
-          template: 'views/login.html',
-          controller: "LoginController"
-        });
-
-      };
 
       $scope.logOut = function () {
         AuthFactory.logout();
-        $rootScope.loggedIn = false;
+        //    $rootScope.loggedIn = false;
         $scope.username = '';
 
-        $state.reload();
+        sharedProperties.data.listName = undefined;
+        sharedProperties.data.list = undefined;
+        sharedProperties.data.listId = undefined;
+
+        $rootScope.newListName = undefined;
+        $scope.newVid = undefined;
+
+        $state.go('app', {}, { reload: true });
 
       };
 
       $rootScope.$on('login:Successful', function () {
-        $rootScope.loggedIn = AuthFactory.isAuthenticated();
         $scope.username = AuthFactory.getUsername();
 
         //  console.log("logged in okay");
@@ -48,7 +46,6 @@ angular.module('vidprog')
       });
 
       $rootScope.$on('registration:Successful', function () {
-        $rootScope.loggedIn = AuthFactory.isAuthenticated();
         $scope.username = AuthFactory.getUsername();
       });
 
@@ -62,8 +59,6 @@ angular.module('vidprog')
     'ngDialog', '$localStorage', 'AuthFactory', 'vcRecaptchaService', 'captchaFactory',
     function ($scope, $rootScope, $state, $stateParams, ngDialog, $localStorage,
       AuthFactory, vcRecaptchaService, captchaFactory) {
-
-      $scope.loginData = $localStorage.getObject('userinfo', '{}');
 
       $scope.loginData = {};
 
@@ -105,8 +100,8 @@ angular.module('vidprog')
       };
 
 
-
       $scope.signIn = function () {
+
         //     console.log("in 1");
         if (!validateEmail($scope.loginData.email) && ($scope.loginChannel == "sign_up")) {
           $scope.loginForm.email.$invalid = true; //turn the input red
@@ -114,15 +109,12 @@ angular.module('vidprog')
           $scope.alert = false;
         } else {
 
-
           doUser();
-
         }
       };
 
 
       var doUser = function () {
-
 
         //can branch between login and register here
         if ($scope.loginChannel == "sign_in") {
@@ -152,12 +144,12 @@ angular.module('vidprog')
       };
 
 
-
       $scope.doLogin = function () {
         if ($scope.rememberMe)
           $localStorage.storeObject('userinfo', $scope.loginData);
 
         AuthFactory.login($scope.loginData);
+        $state.go('app');
 
       };
 
@@ -166,6 +158,7 @@ angular.module('vidprog')
         console.log('Doing registration  -->' + angular.toJson($scope.loginData));
 
         AuthFactory.register($scope.loginData);
+        $state.go('app');
 
       };
 
@@ -204,20 +197,22 @@ angular.module('vidprog')
     }])
 
 
-  .controller('AddController', ['sharedProperties', '$timeout', '$filter', '$scope',
+  .controller('AddController', ['$location', '$localStorage', 'sharedProperties', '$timeout', '$filter', '$scope',
     '$rootScope', '$state', '$http', '$stateParams', 'videoFactory', 'editFactory', 'AuthFactory',
-    function (sharedProperties, $timeout, $filter, $scope, $rootScope, $state, $http,
+    function ($location, $localStorage, sharedProperties, $timeout, $filter, $scope, $rootScope, $state, $http,
       $stateParams, videoFactory, editFactory, AuthFactory) {
 
-      var temp = [];
+      //check if logged out and got here from history button
+      //will be equal only if got here from edit button
+      //if got here from history, replace this url in history
+      if (($rootScope.sessionToken == undefined) ||
+        ($rootScope.sessionToken != $localStorage.getObject('Token', '{}').token)) {
+        $location.url('/').replace();
+      }
+
 
       //empty object allows first input field to display
       $scope.newVid = [{}];
-
-      //if logged out and got here from back button
-      if (!AuthFactory.isAuthenticated()) {
-        $state.go('app');
-      }
 
       $scope.addNewChoice = function () {
         $scope.newVid.push({
@@ -226,6 +221,7 @@ angular.module('vidprog')
         });
       };
 
+      var temp = [];
       $scope.saveNewList = function () {
 
         for (var i = 0; i < $scope.newVid.length; i++) {
@@ -241,7 +237,7 @@ angular.module('vidprog')
         if ($scope.newVid.length == 0) {
           //  console.log("len0");
           $state.go('app');
-          return; //necessary for some reason
+          return;
         }
 
         //save the new list to db
@@ -260,7 +256,7 @@ angular.module('vidprog')
             //FAILED
             function (response) {
 
-              console.log(response.status);
+              //           console.log(response.status);
 
             });
 
@@ -277,10 +273,23 @@ angular.module('vidprog')
     }])
 
 
-  .controller('EditController', ['sharedProperties', '$timeout', '$filter', '$scope',
+  .controller('EditController', ['$location', '$localStorage', 'sharedProperties', '$timeout', '$filter', '$scope',
     '$rootScope', '$http', '$stateParams', 'videoFactory', 'editFactory', 'AuthFactory',
-    '$state', function (sharedProperties, $timeout, $filter, $scope, $rootScope, $http,
+    '$state', function ($location, $localStorage, sharedProperties, $timeout, $filter, $scope, $rootScope, $http,
       $stateParams, videoFactory, editFactory, AuthFactory, $state) {
+
+      //check if logged out and got here from history button
+      //will be equal only if got here from edit button
+      //if got here from history, replace this url in history
+      if (($rootScope.sessionToken == undefined) ||
+        ($rootScope.sessionToken != $localStorage.getObject('Token', '{}').token)) {
+        $location.url('/').replace();
+      }
+
+      // console.log($scope.showEditPage);
+      // console.log($rootScope.sessionToken);
+      // console.log($localStorage.getObject('Token', '{}').token);
+
 
       $scope.list = [];
       $scope.listName = '';
@@ -291,14 +300,6 @@ angular.module('vidprog')
       $scope.listName = sharedProperties.data.listName;
       $scope.listId = sharedProperties.data.listId;
 
-      var temp = [];
-
-      //if logged out and got here from back button
-      if (!AuthFactory.isAuthenticated()) {
-        $state.go('app');
-      }
-
-
 
       $scope.addNewChoice = function () {
         $scope.newVid.push({
@@ -307,15 +308,14 @@ angular.module('vidprog')
         });
       };
 
+      var temp = [];
       $scope.saveList = function () {
-
         for (var i = 0; i < $scope.newVid.length; i++) {
           if (!$scope.newVid[i].videoName)
             $scope.newVid[i].videoName = ""; //insures appears in object
           if ($scope.newVid[i].videoURL)
             temp.push($scope.newVid[i]);
         }
-
         $scope.newVid = temp;
 
 
@@ -351,15 +351,13 @@ angular.module('vidprog')
       $scope.goBack = function () {
         $state.go('app');
       };
-
-
     }])
 
 
 
-  .controller('ContentController', ['sharedProperties', '$timeout', '$scope',
+  .controller('ContentController', ['$localStorage', 'sharedProperties', '$timeout', '$scope',
     '$rootScope', '$state', '$http', '$stateParams', 'videoFactory', 'AuthFactory',
-    function (sharedProperties, $timeout, $scope, $rootScope, $state, $http, $stateParams,
+    function ($localStorage, sharedProperties, $timeout, $scope, $rootScope, $state, $http, $stateParams,
       videoFactory, AuthFactory) {
 
       $scope.listNames = [];
@@ -378,20 +376,17 @@ angular.module('vidprog')
       //  console.log("at 1");
       $scope.showDuplicateNameErrorBox = false;
 
-
-
       if (AuthFactory.isAuthenticated()) {
-        $rootScope.loggedIn = true;
+        //    $rootScope.loggedIn = true;
         $scope.username = AuthFactory.getUsername();
       }
-
 
       //start with video of static
       $scope.playerVars = {
         autoplay: 1,
-        mute: 1
+        mute: 1,
       };
-      $scope.vidToPlay = "bf7NbRFyg3Y"; // go to this video
+      $scope.vidToPlay = "https://youtu.be/bf7NbRFyg3Y"; // go to this video
 
       videoList = videoFactory.get({
         /* id: $stateParams.id */
@@ -411,7 +406,6 @@ angular.module('vidprog')
             $scope.message = "Error: " + response.status + " " + response.statusText;
           }
         );
-
 
 
       $scope.addItem = function () {
@@ -435,7 +429,8 @@ angular.module('vidprog')
         //unmute from initial video of muted static
         $scope.playerVars = {
           autoplay: 1,
-          mute: 0
+          mute: 0,
+          //     start: 0 //if same vid in new list, make sure restarts at beginning
         };
 
         $scope.loadArray(listIndex);
@@ -445,19 +440,19 @@ angular.module('vidprog')
 
 
       $scope.editListFun = function () {
-        //disallow if user not logged in
-        if (!AuthFactory.getUsername())
-          return;
+
         $scope.closeAllDialogs();
 
         //do not go to edit page if video list is not loaded (in player)
         if (!$scope.displayListName) {
           $scope.hideDupErrBox(); //close list input box if it is open
-
           return;
         } else {
           //make sure array is loaded w/ current playing list
           //and then transition to list editing page
+          //these two vars equal will mean got to destination from button
+          //instead of history
+          $rootScope.sessionToken = $localStorage.getObject('Token', '{}').token;
 
           $state.go('app.editList');
 
@@ -474,7 +469,6 @@ angular.module('vidprog')
           return;
 
         $scope.hideDupErrBox();
-
 
         if ($scope.showInput == true)
           $scope.showInput = false;
@@ -524,6 +518,10 @@ angular.module('vidprog')
           $scope.showInput = false;
           $scope.listNames.push($scope.newListName);
           $rootScope.newListName = $scope.newListName;
+
+          //these two vars equal will mean got to destination from button
+          //instead of history
+          $rootScope.sessionToken = $localStorage.getObject('Token', '{}').token;
 
           $state.go('app.createList');
 
@@ -593,7 +591,14 @@ angular.module('vidprog')
             /*  console.log(i);*/
             $scope.selected = null;
             $scope.selected = $scope.list[i + 1];
-            $scope.vidToPlay = youtubeParser($scope.list[i + 1].videoURL); // go to this video
+
+
+            /* add a unique number for this list (_id) to end of url to cause video to 
+            reload if current playing video is first video in new clicked on list */
+            $scope.vidToPlay = "https://youtu.be/" +
+              youtubeParser($scope.list[i + 1].videoURL) +
+              "?" + sharedProperties.data.listId; // go to this video
+
             break;
           }
         }
@@ -605,15 +610,19 @@ angular.module('vidprog')
 
         //   console.log(angular.toJson(xitem) +"     " + index);
         $scope.selected = xitem; //will be highlighted in list
-        $scope.vidToPlay = youtubeParser($scope.list[index].videoURL); // go to this video
+
+        /* add unique number for this list (_id) to end of url to cause video to 
+        reload if current playing video is first video in new clicked on list */
+        $scope.vidToPlay = "https://youtu.be/" +
+          youtubeParser($scope.list[index].videoURL) +
+          "?" + sharedProperties.data.listId; // go to this video
+
       };
 
 
       $scope.isActive = function (xitem) {
         return $scope.selected === xitem;
       };
-
-
 
       function fixNameLen(videoName) {
         if (videoName.length > 80) {
@@ -662,8 +671,15 @@ angular.module('vidprog')
         if (match)
           if (match.length >= 2) return match[2];
 
+
+        console.log(videoURL);
+
+
         return videoURL; //in case just video identifier was passed in
 
       }
+
+      // $("body").tooltip({ selector: '[data-toggle="tooltip"]' });
+      // $('[data-toggle="tooltip"]').tooltip();
 
     }]);
